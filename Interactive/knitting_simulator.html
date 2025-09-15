@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧶 Interactive Knitting Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef, #fecfef);
+            font-family: 'Comic Sans MS', cursive;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: #8b4a6b;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .control-group {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #8b4a6b;
+        }
+
+        select, button, input {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 5px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a6f);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        .knitting-area {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #knittingCanvas {
+            border: 3px solid #8b4a6b;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: crosshair;
+        }
+
+        .pattern-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .pattern-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .pattern-preview {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .yarn-display {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+        }
+
+        .yarn-ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .yarn-ball:hover {
+            transform: scale(1.1);
+        }
+
+        .stitch-counter {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            color: #8b4a6b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧶 Interactive Knitting Simulator 🧶</h1>
+            <p>Create beautiful knitted patterns with virtual needles!</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Yarn Color:</label>
+                <div class="yarn-display">
+                    <div class="yarn-ball" style="background: #ff6b6b;" onclick="selectYarn('#ff6b6b')"></div>
+                    <div class="yarn-ball" style="background: #4ecdc4;" onclick="selectYarn('#4ecdc4')"></div>
+                    <div class="yarn-ball" style="background: #45b7d1;" onclick="selectYarn('#45b7d1')"></div>
+                    <div class="yarn-ball" style="background: #96ceb4;" onclick="selectYarn('#96ceb4')"></div>
+                    <div class="yarn-ball" style="background: #ffeaa7;" onclick="selectYarn('#ffeaa7')"></div>
+                    <div class="yarn-ball" style="background: #dda0dd;" onclick="selectYarn('#dda0dd')"></div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Stitch Type:</label>
+                <select id="stitchType" onchange="updateStitchType()">
+                    <option value="knit">Knit Stitch</option>
+                    <option value="purl">Purl Stitch</option>
+                    <option value="cable">Cable Stitch</option>
+                    <option value="ribbing">Ribbing</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Pattern Size:</label>
+                <select id="patternSize" onchange="updateCanvasSize()">
+                    <option value="small">Small (20x20)</option>
+                    <option value="medium" selected>Medium (30x30)</option>
+                    <option value="large">Large (40x40)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button onclick="clearCanvas()">🗑️ Clear</button>
+                <button onclick="savePattern()">💾 Save</button>
+                <button onclick="loadPattern()">📂 Load</button>
+                <button onclick="autoKnit()">✨ Auto Knit</button>
+            </div>
+        </div>
+
+        <div class="knitting-area">
+            <div class="canvas-container">
+                <canvas id="knittingCanvas" width="600" height="600"></canvas>
+            </div>
+
+            <div class="stitch-counter">
+                Stitches: <span id="stitchCount">0</span> | Rows: <span id="rowCount">0</span>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>🎯 Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <p id="progressText">0% Complete</p>
+            </div>
+
+            <div class="stat-card">
+                <h3>🧶 Yarn Used</h3>
+                <p id="yarnUsed">0 meters</p>
+                <p>💰 Cost: $<span id="yarnCost">0.00</span></p>
+            </div>
+
+            <div class="stat-card">
+                <h3>⏱️ Time</h3>
+                <p id="knittingTime">00:00:00</p>
+                <p>🏆 Level: <span id="knitterLevel">Beginner</span></p>
+            </div>
+        </div>
+
+        <div class="knitting-area">
+            <h3 style="text-align: center; color: #8b4a6b; margin-bottom: 20px;">🎨 Pattern Gallery</h3>
+            <div class="pattern-gallery">
+                <div class="pattern-card" onclick="loadPresetPattern('stripes')">
+                    <div class="pattern-preview" style="background: repeating-linear-gradient(0deg, #ff6b6b 0px, #ff6b6b 10px, #4ecdc4 10px, #4ecdc4 20px);"></div>
+                    <h4>Stripes</h4>
+                </div>
+                <div class="pattern-card" onclick="loadPresetPattern('checkerboard')">
+                    <div class="pattern-preview" style="background: repeating-conic-gradient(#45b7d1 0% 25%, #ffeaa7 25% 50%); background-size: 20px 20px;"></div>
+                    <h4>Checkerboard</h4>
+                </div>
+                <div class="pattern-card" onclick="loadPresetPattern('hearts')">
+                    <div class="pattern-preview" style="background: #dda0dd; background-image: radial-gradient(circle at 25% 25%, #ff6b6b 2px, transparent 2px), radial-gradient(circle at 75% 25%, #ff6b6b 2px, transparent 2px);"></div>
+                    <h4>Hearts</h4>
+                </div>
+                <div class="pattern-card" onclick="loadPresetPattern('diamond')">
+                    <div class="pattern-preview" style="background: linear-gradient(45deg, #96ceb4 25%, transparent 25%), linear-gradient(-45deg, #96ceb4 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #96ceb4 75%), linear-gradient(-45deg, transparent 75%, #96ceb4 75%); background-size: 20px 20px;"></div>
+                    <h4>Diamond</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let canvas = document.getElementById('knittingCanvas');
+        let ctx = canvas.getContext('2d');
+        let currentYarn = '#ff6b6b';
+        let currentStitch = 'knit';
+        let isKnitting = false;
+        let stitchCount = 0;
+        let rowCount = 0;
+        let startTime = Date.now();
+        let knittingPattern = [];
+        let gridSize = 30;
+
+        // Initialize canvas
+        function initCanvas() {
+            const size = document.getElementById('patternSize').value;
+            switch(size) {
+                case 'small': gridSize = 20; break;
+                case 'medium': gridSize = 30; break;
+                case 'large': gridSize = 40; break;
+            }
+            
+            knittingPattern = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            drawGrid();
+            updateStats();
+        }
+
+        // Draw grid
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const cellWidth = canvas.width / gridSize;
+            const cellHeight = canvas.height / gridSize;
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= gridSize; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * cellWidth, 0);
+                ctx.lineTo(i * cellWidth, canvas.height);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * cellHeight);
+                ctx.lineTo(canvas.width, i * cellHeight);
+                ctx.stroke();
+            }
+            
+            // Draw stitches
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    if (knittingPattern[row][col]) {
+                        drawStitch(col, row, knittingPattern[row][col]);
+                    }
+                }
+            }
+        }
+
+        // Draw individual stitch
+        function drawStitch(col, row, stitchData) {
+            const cellWidth = canvas.width / gridSize;
+            const cellHeight = canvas.height / gridSize;
+            const x = col * cellWidth;
+            const y = row * cellHeight;
+            
+            ctx.fillStyle = stitchData.color;
+            
+            switch(stitchData.type) {
+                case 'knit':
+                    // V-shaped knit stitch
+                    ctx.beginPath();
+                    ctx.moveTo(x + 2, y + cellHeight - 2);
+                    ctx.lineTo(x + cellWidth/2, y + 2);
+                    ctx.lineTo(x + cellWidth - 2, y + cellHeight - 2);
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = stitchData.color;
+                    ctx.stroke();
+                    break;
+                    
+                case 'purl':
+                    // Bumpy purl stitch
+                    ctx.beginPath();
+                    ctx.arc(x + cellWidth/2, y + cellHeight/2, cellWidth/3, 0, 2 * Math.PI);
+                    ctx.fill();
+                    break;
+                    
+                case 'cable':
+                    // Cable pattern
+                    ctx.beginPath();
+                    ctx.moveTo(x + 2, y + 2);
+                    ctx.bezierCurveTo(x + cellWidth/4, y + cellHeight/2, x + 3*cellWidth/4, y + cellHeight/2, x + cellWidth - 2, y + cellHeight - 2);
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = stitchData.color;
+                    ctx.stroke();
+                    break;
+                    
+                case 'ribbing':
+                    // Vertical lines for ribbing
+                    ctx.fillRect(x + 2, y + 2, cellWidth - 4, cellHeight - 4);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x + cellWidth/3, y + 2);
+                    ctx.lineTo(x + cellWidth/3, y + cellHeight - 2);
+                    ctx.moveTo(x + 2*cellWidth/3, y + 2);
+                    ctx.lineTo(x + 2*cellWidth/3, y + cellHeight - 2);
+                    ctx.stroke();
+                    break;
+            }
+        }
+
+        // Canvas event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            isKnitting = true;
+            addStitch(e);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isKnitting) {
+                addStitch(e);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isKnitting = false;
+        });
+
+        // Add stitch at mouse position
+        function addStitch(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const cellWidth = canvas.width / gridSize;
+            const cellHeight = canvas.height / gridSize;
+            
+            const col = Math.floor(x / cellWidth);
+            const row = Math.floor(y / cellHeight);
+            
+            if (col >= 0 && col < gridSize && row >= 0 && row < gridSize) {
+                if (!knittingPattern[row][col]) {
+                    knittingPattern[row][col] = {
+                        color: currentYarn,
+                        type: currentStitch
+                    };
+                    stitchCount++;
+                    drawGrid();
+                    updateStats();
+                    playKnittingSound();
+                }
+            }
+        }
+
+        // Control functions
+        function selectYarn(color) {
+            currentYarn = color;
+            // Visual feedback
+            document.querySelectorAll('.yarn-ball').forEach(ball => {
+                ball.style.border = '3px solid #fff';
+            });
+            event.target.style.border = '3px solid #333';
+        }
+
+        function updateStitchType() {
+            currentStitch = document.getElementById('stitchType').value;
+        }
+
+        function updateCanvasSize() {
+            initCanvas();
+        }
+
+        function clearCanvas() {
+            knittingPattern = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            stitchCount = 0;
+            rowCount = 0;
+            drawGrid();
+            updateStats();
+        }
+
+        function savePattern() {
+            const patternData = JSON.stringify(knittingPattern);
+            localStorage.setItem('knittingPattern', patternData);
+            alert('🎉 Pattern saved successfully!');
+        }
+
+        function loadPattern() {
+            const saved = localStorage.getItem('knittingPattern');
+            if (saved) {
+                knittingPattern = JSON.parse(saved);
+                stitchCount = knittingPattern.flat().filter(stitch => stitch !== null).length;
+                drawGrid();
+                updateStats();
+                alert('📂 Pattern loaded!');
+            } else {
+                alert('No saved pattern found.');
+            }
+        }
+
+        function autoKnit() {
+            let delay = 0;
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    setTimeout(() => {
+                        if (!knittingPattern[row][col]) {
+                            knittingPattern[row][col] = {
+                                color: currentYarn,
+                                type: currentStitch
+                            };
+                            stitchCount++;
+                            drawGrid();
+                            updateStats();
+                        }
+                    }, delay);
+                    delay += 50;
+                }
+            }
+        }
+
+        function loadPresetPattern(pattern) {
+            clearCanvas();
+            
+            switch(pattern) {
+                case 'stripes':
+                    for (let row = 0; row < gridSize; row++) {
+                        const color = row % 4 < 2 ? '#ff6b6b' : '#4ecdc4';
+                        for (let col = 0; col < gridSize; col++) {
+                            knittingPattern[row][col] = { color: color, type: 'knit' };
+                            stitchCount++;
+                        }
+                    }
+                    break;
+                    
+                case 'checkerboard':
+                    for (let row = 0; row < gridSize; row++) {
+                        for (let col = 0; col < gridSize; col++) {
+                            const color = (row + col) % 2 === 0 ? '#45b7d1' : '#ffeaa7';
+                            knittingPattern[row][col] = { color: color, type: 'knit' };
+                            stitchCount++;
+                        }
+                    }
+                    break;
+                    
+                case 'hearts':
+                    const heartPattern = [
+                        '  ❤   ❤  ',
+                        ' ❤❤❤ ❤❤❤ ',
+                        '❤❤❤❤❤❤❤❤❤',
+                        ' ❤❤❤❤❤❤❤ ',
+                        '  ❤❤❤❤❤  ',
+                        '   ❤❤❤   ',
+                        '    ❤    '
+                    ];
+                    
+                    for (let row = 0; row < Math.min(gridSize, heartPattern.length * 3); row++) {
+                        for (let col = 0; col < gridSize; col++) {
+                            const patternRow = Math.floor(row / 3) % heartPattern.length;
+                            const patternCol = Math.floor(col / 2) % heartPattern[0].length;
+                            const isHeart = heartPattern[patternRow][patternCol] === '❤';
+                            const color = isHeart ? '#ff6b6b' : '#dda0dd';
+                            knittingPattern[row][col] = { color: color, type: 'knit' };
+                            stitchCount++;
+                        }
+                    }
+                    break;
+                    
+                case 'diamond':
+                    const center = Math.floor(gridSize / 2);
+                    for (let row = 0; row < gridSize; row++) {
+                        for (let col = 0; col < gridSize; col++) {
+                            const distance = Math.abs(row - center) + Math.abs(col - center);
+                            const color = distance % 4 < 2 ? '#96ceb4' : '#ffeaa7';
+                            knittingPattern[row][col] = { color: color, type: 'knit' };
+                            stitchCount++;
+                        }
+                    }
+                    break;
+            }
+            
+            drawGrid();
+            updateStats();
+        }
+
+        function updateStats() {
+            // Update stitch and row counts
+            document.getElementById('stitchCount').textContent = stitchCount;
+            rowCount = Math.ceil(stitchCount / gridSize);
+            document.getElementById('rowCount').textContent = rowCount;
+            
+            // Update progress
+            const totalCells = gridSize * gridSize;
+            const progress = (stitchCount / totalCells) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '% Complete';
+            
+            // Update yarn usage
+            const yarnUsed = (stitchCount * 0.1).toFixed(1);
+            document.getElementById('yarnUsed').textContent = yarnUsed + ' meters';
+            document.getElementById('yarnCost').textContent = (yarnUsed * 0.15).toFixed(2);
+            
+            // Update time
+            const elapsed = Date.now() - startTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('knittingTime').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update level
+            let level = 'Beginner';
+            if (stitchCount > 500) level = 'Intermediate';
+            if (stitchCount > 1000) level = 'Advanced';
+            if (stitchCount > 2000) level = 'Expert';
+            if (stitchCount > 3000) level = 'Master Knitter';
+            document.getElementById('knitterLevel').textContent = level;
+        }
+
+        function playKnittingSound() {
+            // Create audio context for sound effects
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800 + Math.random() * 200;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // Initialize the app
+        initCanvas();
+        
+        // Update timer every second
+        setInterval(updateStats, 1000);
+
+        // Select first yarn ball by default
+        document.querySelector('.yarn-ball').style.border = '3px solid #333';
+    </script>
+</body>
+</html>
